@@ -1,17 +1,22 @@
 <?php
 require_once 'db.php';
 
-header("Content Type: aplication/json");
+header("Content-Type: application/json");
 
 $method = $_SERVER['REQUEST_METHOD'];
 
-if ($method == 'GET') {
+if ($method === 'GET') {
     $query = $pdo->query("SELECT * FROM usuarios");
-    echo json_decode($query->fetch(PDO::FETCH_ASSOC));
-}elseif ($method === 'POST') {
-    $data = json_encode(file_get_contents("php://input"), true);
-    $smtm = $pdo->prepare("INSERT INTO usuarios (nome, email) VALUES (?, ?)");
-    $smtm->execute([$data['nome'], $data['email']]);
-    echo json_encode(['status' => 'sucess']);
+    $usuarios = $query->fetchAll(PDO::FETCH_ASSOC);
+    echo json_encode($usuarios);
+} elseif ($method === 'POST') {
+    $data = json_decode(file_get_contents("php://input"), true);
+    $stmt = $pdo->prepare("INSERT INTO usuarios (nome, email) VALUES (?, ?)");
+    $stmt->execute([$data['nome'], $data['email']]);
+    echo json_encode(['status' => 'success']);
+} else {
+    // Segurança: retornar erro para métodos desconhecidos
+    http_response_code(405);
+    echo json_encode(['error' => 'Método não permitido']);
 }
 ?>

@@ -1,8 +1,10 @@
-create database app2
+CREATE DATABASE IF NOT EXISTS usuarios_db;
 
-create table usuarios (
+USE usuarios_db;
+
+CREATE TABLE IF NOT EXISTS usuarios (
     ID int NOT NULL AUTO_INCREMENT,
     nome varchar(255),
     email varchar(255),
     PRIMARY KEY (ID)
-)
+);
