@@ -1,5 +1,5 @@
 <?php
-$ch = curl_init('http://backend:80/');
+$ch = curl_init('http://backend/');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 $response = curl_exec($ch);
 
