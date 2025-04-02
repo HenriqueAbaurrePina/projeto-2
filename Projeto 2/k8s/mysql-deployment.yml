@@ -31,7 +31,7 @@ spec:
       volumes:
         - name: mysql-storage
           persistentVolumeClaim:
-            claimName: mysql-pvc-clean
+            claimName: mysql-pvc-clean2
         - name: init-script
           configMap:
             name: mysql-init-script
