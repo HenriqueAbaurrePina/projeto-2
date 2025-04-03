@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mysql-init-job
+spec:
+  template:
+    spec:
+      containers:
+        - name: mysql-client
+          image: mysql:5.7
+          command: ["sh", "-c"]
+          args:
+            - >
+              sleep 15 &&
+              mysql -h mysql -u root -proot usuarios_db -e "
+              CREATE TABLE IF NOT EXISTS usuarios (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nome VARCHAR(100),
+                email VARCHAR(100)
+              );"
+      restartPolicy: Never
