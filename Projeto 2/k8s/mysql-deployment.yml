@@ -2,11 +2,12 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mysql
+  namespace: default
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: mysql
-  replicas: 1
   template:
     metadata:
       labels:
@@ -21,11 +22,10 @@ spec:
             - name: MYSQL_DATABASE
               value: usuarios_db
           ports:
-          - containerPort: 3306
+            - containerPort: 3306
           volumeMounts:
             - name: init-script
-              mountPath: /docker-entrypoint-initdb.d/init.sql
-              subPath: init.sql
+              mountPath: /docker-entrypoint-initdb.d
             - name: mysql-storage
               mountPath: /var/lib/mysql
       volumes:
