@@ -28,10 +28,10 @@ spec:
               subPath: init.sql
             - name: mysql-storage
               mountPath: /var/lib/mysql
-    volumes:
-      - name: init-script
-        configMap:
-          name: mysql-init-script
-      - name: mysql-storage
-        persistentVolumeClaim:
-          claimName: mysql-pvc-disk
+      volumes:
+        - name: init-script
+          configMap:
+            name: mysql-init-script
+        - name: mysql-storage
+          persistentVolumeClaim:
+            claimName: mysql-pvc-disk
