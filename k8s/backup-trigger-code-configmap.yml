@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backup-trigger-code
+data:
+  index.php: |
+    <?php
+    echo shell_exec("kubectl apply -f /backup/mysql-backup-job.yml");
+    ?>

@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backup-trigger
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backup-trigger
+  template:
+    metadata:
+      labels:
+        app: backup-trigger
+    spec:
+      containers:
+        - name: trigger
+          image: php:8.1-cli
+          command: ["php", "-S", "0.0.0.0:80", "-t", "/app"]
+          volumeMounts:
+            - name: app-code
+              mountPath: /app
+            - name: job-yaml
+              mountPath: /backup
+      volumes:
+        - name: app-code
+          configMap:
+            name: backup-trigger-code
+        - name: job-yaml
+          configMap:
+            name: backup-job-config
