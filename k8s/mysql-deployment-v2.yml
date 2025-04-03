@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mysql
-  namespace: default
 spec:
   replicas: 1
   selector:
@@ -19,8 +18,6 @@ spec:
           env:
             - name: MYSQL_ROOT_PASSWORD
               value: root
-            - name: MYSQL_DATABASE
-              value: usuarios_db
           ports:
             - containerPort: 3306
           volumeMounts:

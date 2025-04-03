@@ -2,7 +2,6 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: mysql-init-job
-  namespace: default
 spec:
   template:
     spec:
@@ -12,8 +11,10 @@ spec:
           command: ["sh", "-c"]
           args:
             - >
-              sleep 15 &&
-              mysql -h mysql -u root -proot usuarios_db -e "
+              sleep 30 &&
+              mysql -h mysql -u root -proot -e "
+              CREATE DATABASE IF NOT EXISTS usuarios_db;
+              USE usuarios_db;
               CREATE TABLE IF NOT EXISTS usuarios (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 nome VARCHAR(100),
