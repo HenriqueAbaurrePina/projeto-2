@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:5.7
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: root
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+            - name: backup-volume
+              mountPath: /backup
+      initContainers:
+        - name: restore-db
+          image: mysql:5.7
+          command:
+            [
+              "sh",
+              "-c",
+              "if [ -f /backup/usuarios_dump.sql ]; then echo 'Restaurando dump...'; mysql -h localhost -u root -proot < /backup/usuarios_dump.sql; else echo 'Nenhum dump encontrado.'; fi"
+            ]
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: root
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+            - name: backup-volume
+              mountPath: /backup
+      volumes:
+        - name: mysql-data
+          emptyDir: {}
+        - name: backup-volume
+          persistentVolumeClaim:
+            claimName: mysql-backup-pvc
