@@ -11,13 +11,15 @@ spec:
           command: ["sh", "-c"]
           args:
             - >
-              sleep 20 &&
-              mysql -h mysql -u root -proot -e "CREATE DATABASE IF NOT EXISTS usuarios_db;" &&
-              mysql -h mysql -u root -proot -D usuarios_db -e "
+              echo "Esperando o MySQL ficar pronto...";
+              sleep 25;
+              echo "Criando banco...";
+              mysql -h mysql -u root -proot -e "CREATE DATABASE IF NOT EXISTS usuarios_db;";
+              echo "Criando tabela...";
+              mysql -h mysql -u root -proot usuarios_db -e "
                 CREATE TABLE IF NOT EXISTS usuarios (
                   id INT AUTO_INCREMENT PRIMARY KEY,
                   nome VARCHAR(100),
                   email VARCHAR(100)
                 );"
-
       restartPolicy: Never
