@@ -12,12 +12,12 @@ spec:
           args:
             - >
               sleep 20 &&
-              mysql -h mysql -u root -proot -e "
-              CREATE DATABASE IF NOT EXISTS usuarios_db;
-              USE usuarios_db;
-              CREATE TABLE IF NOT EXISTS usuarios (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                nome VARCHAR(100),
-                email VARCHAR(100)
-              );"
+              mysql -h mysql -u root -proot -e "CREATE DATABASE IF NOT EXISTS usuarios_db;" &&
+              mysql -h mysql -u root -proot -D usuarios_db -e "
+                CREATE TABLE IF NOT EXISTS usuarios (
+                  id INT AUTO_INCREMENT PRIMARY KEY,
+                  nome VARCHAR(100),
+                  email VARCHAR(100)
+                );"
+
       restartPolicy: Never
