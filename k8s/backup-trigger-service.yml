@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: backup-trigger-service
+spec:
+  selector:
+    app: backup-trigger
+  ports:
+    - port: 80
+      targetPort: 80
