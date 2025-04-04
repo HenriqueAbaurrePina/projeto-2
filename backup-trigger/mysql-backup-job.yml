@@ -1,18 +1,14 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  generateName: mysql-backup-job-
+  name: mysql-backup-job
 spec:
   template:
     spec:
       containers:
         - name: backup
           image: mysql:5.7
-          command: ["sh", "-c"]
-          args:
-            - >
-              sleep 5 &&
-              mysqldump -h mysql -u root -proot usuarios_db > /backup/usuarios_dump.sql
+          command: ["sh", "-c", "mysqldump -h mysql -u root -proot usuarios_db > /backup/usuarios_dump.sql"]
           volumeMounts:
             - name: backup-volume
               mountPath: /backup
