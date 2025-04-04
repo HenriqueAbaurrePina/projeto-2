@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: debug-backup
+spec:
+  containers:
+    - name: debug
+      image: ubuntu
+      command: ["/bin/bash", "-c", "sleep 3600"]
+      volumeMounts:
+        - name: backup-volume
+          mountPath: /backup
+  volumes:
+    - name: backup-volume
+      persistentVolumeClaim:
+        claimName: mysql-backup-pvc
+  restartPolicy: Never
