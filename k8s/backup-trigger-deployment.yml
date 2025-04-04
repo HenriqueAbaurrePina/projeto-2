@@ -15,6 +15,7 @@ spec:
       containers:
         - name: backup-trigger
           image: henriquepina/backup-trigger:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
           volumeMounts:
