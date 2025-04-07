@@ -22,12 +22,12 @@ spec:
       initContainers:
         - name: restore-db
           image: mysql:5.7
-          command: ["/bin/sh", "-c"]
+          command: ["/bin/bash", "-c"]
           args:
             - |
               echo "[Init] Verificando se o banco já foi restaurado..."
-              if [ -d "/var/lib/mysql/mysql" ]; then
-                echo "[Init] Dados já existem. Pulando restauração."
+              if [ -f /var/lib/mysql/usuarios_db.flag ]; then
+                echo "[Init] Banco já restaurado. Pulando restauração."
                 exit 0
               fi
 
@@ -41,11 +41,14 @@ spec:
               echo "[Init] Criando banco e restaurando dump..."
               mysql -h localhost -u root -proot -e "CREATE DATABASE IF NOT EXISTS usuarios_db;"
               mysql -h localhost -u root -proot usuarios_db < /backup/usuarios_dump.sql
+
+              echo "[Init] Marca de restauração criada."
+              touch /var/lib/mysql/usuarios_db.flag
           volumeMounts:
-            - name: backup-volume
-              mountPath: /backup
             - name: mysql-data
               mountPath: /var/lib/mysql
+            - name: backup-volume
+              mountPath: /backup
       containers:
         - name: mysql
           image: mysql:5.7
@@ -59,3 +62,13 @@ spec:
               mountPath: /var/lib/mysql
             - name: backup-volume
               mountPath: /backup
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              if [ -d "/var/lib/mysql/mysql" ]; then
+                echo "⚠️ Dados já existem. Pulando inicialização."
+                exec mysqld
+              else
+                echo "📦 Inicializando banco de dados pela primeira vez..."
+                exec docker-entrypoint.sh mysqld
+              fi
