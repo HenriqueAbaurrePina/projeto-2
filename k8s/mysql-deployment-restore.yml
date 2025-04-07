@@ -12,12 +12,30 @@ spec:
       labels:
         app: mysql
     spec:
+      initContainers:
+        - name: restore-db
+          image: mysql:5.7
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "[Init] Esperando o MySQL iniciar...";
+              for i in $(seq 1 60); do
+                mysqladmin ping -h localhost --silent && break;
+                echo "[Tentativa $i] Aguardando MySQL subir...";
+                sleep 2;
+              done
+              echo "[Init] Criando banco e restaurando dump..."
+              mysql -h localhost -u root -proot -e "CREATE DATABASE IF NOT EXISTS usuarios_db;"
+              mysql -h localhost -u root -proot usuarios_db < /backup/usuarios_dump.sql
+          volumeMounts:
+            - name: backup-volume
+              mountPath: /backup
       containers:
         - name: mysql
           image: mysql:5.7
           env:
             - name: MYSQL_ROOT_PASSWORD
-              value: root
+              value: "root"
           ports:
             - containerPort: 3306
           volumeMounts:
@@ -25,35 +43,10 @@ spec:
               mountPath: /var/lib/mysql
             - name: backup-volume
               mountPath: /backup
-      initContainers:
-        - name: restore-db
-          image: mysql:5.7
-          command:
-            [
-              "sh",
-              "-c",
-              "for i in $(seq 1 60); do \
-                echo \"[Tentativa $i] Aguardando MySQL subir...\"; \
-                if mysqladmin ping -h 127.0.0.1 --silent; then \
-                  echo 'MySQL está disponível! Restaurando dump...'; \
-                  if [ -f /backup/usuarios_dump.sql ]; then \
-                    mysql -h 127.0.0.1 -u root -proot < /backup/usuarios_dump.sql && break; \
-                  else \
-                    echo 'Nenhum dump encontrado.' && break; \
-                  fi; \
-                fi; \
-                sleep 5; \
-              done"
-            ]
-          env:
-            - name: MYSQL_ROOT_PASSWORD
-              value: root
-          volumeMounts:
-            - name: backup-volume
-              mountPath: /backup
       volumes:
         - name: mysql-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: mysql-pvc-final
         - name: backup-volume
           persistentVolumeClaim:
             claimName: mysql-backup-pvc
