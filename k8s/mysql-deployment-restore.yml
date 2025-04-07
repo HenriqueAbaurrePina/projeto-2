@@ -22,28 +22,24 @@ spec:
       initContainers:
         - name: restore-db
           image: mysql:5.7
-          command: ["/bin/bash", "-c"]
+          command: ["/bin/sh", "-c"]
           args:
             - |
-              echo "[Init] Verificando se o banco já foi restaurado..."
-              if [ -f /var/lib/mysql/usuarios_db.flag ]; then
-                echo "[Init] Banco já restaurado. Pulando restauração."
-                exit 0
+              echo "[Init] Verificando se o banco já foi restaurado...";
+              if [ -f /var/lib/mysql/.restored ]; then
+                echo "[Init] Banco já restaurado. Pulando restauração.";
+                exit 0;
               fi
-
-              echo "[Init] Esperando o MySQL iniciar..."
+              echo "[Init] Esperando o MySQL iniciar...";
               for i in $(seq 1 60); do
-                mysqladmin ping -h localhost --silent && break
-                echo "[Tentativa $i] Aguardando MySQL subir..."
-                sleep 2
+                mysqladmin ping -h localhost --silent && break;
+                echo "[Tentativa $i] Aguardando MySQL subir...";
+                sleep 2;
               done
-
-              echo "[Init] Criando banco e restaurando dump..."
+              echo "[Init] Criando banco e restaurando dump...";
               mysql -h localhost -u root -proot -e "CREATE DATABASE IF NOT EXISTS usuarios_db;"
               mysql -h localhost -u root -proot usuarios_db < /backup/usuarios_dump.sql
-
-              echo "[Init] Marca de restauração criada."
-              touch /var/lib/mysql/usuarios_db.flag
+              touch /var/lib/mysql/.restored
           volumeMounts:
             - name: mysql-data
               mountPath: /var/lib/mysql
@@ -62,15 +58,5 @@ spec:
               mountPath: /var/lib/mysql
             - name: backup-volume
               mountPath: /backup
-          command: ["/bin/bash", "-c"]
-          args:
-            - |
-              if [ "$(ls -A /var/lib/mysql)" ]; then
-                echo "⚠️ Dados já existem. Pulando inicialização."
-                exec mysqld
-              else
-                echo "📦 Inicializando banco de dados pela primeira vez..."
-                mysqld --initialize-insecure --user=mysql
-                exec mysqld
-              fi
-
+          securityContext:
+            runAsUser: 0  # Executar como root para evitar erro de permissão
