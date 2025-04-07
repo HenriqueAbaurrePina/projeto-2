@@ -19,10 +19,18 @@ spec:
         - name: backup-volume
           persistentVolumeClaim:
             claimName: mysql-backup-pvc
+
       initContainers:
         - name: restore-db
           image: mysql:5.7
-          command: ["/bin/sh", "-c"]
+          volumeMounts:
+            - name: backup-volume
+              mountPath: /backup
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+          command:
+            - /bin/sh
+            - -c
           args:
             - |
               echo "[Init] Verificando se o banco já foi restaurado...";
@@ -32,19 +40,16 @@ spec:
               fi
               echo "[Init] Esperando o MySQL iniciar...";
               for i in $(seq 1 60); do
-                mysqladmin ping -h localhost --silent && break;
+                mysqladmin ping -h mysql --silent && break;
                 echo "[Tentativa $i] Aguardando MySQL subir...";
                 sleep 2;
               done
               echo "[Init] Criando banco e restaurando dump...";
-              mysql -h localhost -u root -proot -e "CREATE DATABASE IF NOT EXISTS usuarios_db;"
-              mysql -h localhost -u root -proot usuarios_db < /backup/usuarios_dump.sql
+              mysql -h mysql -u root -proot -e "CREATE DATABASE IF NOT EXISTS usuarios_db;"
+              mysql -h mysql -u root -proot usuarios_db < /backup/usuarios_dump.sql
+              echo "[Init] Marca de restauração criada.";
               touch /var/lib/mysql/.restored
-          volumeMounts:
-            - name: mysql-data
-              mountPath: /var/lib/mysql
-            - name: backup-volume
-              mountPath: /backup
+
       containers:
         - name: mysql
           image: mysql:5.7
@@ -58,5 +63,3 @@ spec:
               mountPath: /var/lib/mysql
             - name: backup-volume
               mountPath: /backup
-          securityContext:
-            runAsUser: 0  # Executar como root para evitar erro de permissão
