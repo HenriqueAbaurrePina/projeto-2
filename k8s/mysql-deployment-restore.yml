@@ -3,44 +3,15 @@ kind: Deployment
 metadata:
   name: mysql
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: mysql
-  replicas: 1
   template:
     metadata:
       labels:
         app: mysql
     spec:
-      containers:
-        - name: mysql
-          image: mysql:5.7
-          ports:
-            - containerPort: 3306
-          env:
-            - name: MYSQL_ROOT_PASSWORD
-              value: root
-          volumeMounts:
-            - name: mysql-data
-              mountPath: /var/lib/mysql
-            - name: backup-volume
-              mountPath: /backup
-          lifecycle:
-            postStart:
-              exec:
-                command:
-                  - /bin/bash
-                  - -c
-                  - |
-                    echo "[PostStart] Aguardando MySQL ficar pronto..."
-                    for i in $(seq 1 60); do
-                      mysqladmin ping -h 127.0.0.1 -uroot -proot --silent && break
-                      echo "[Tentativa $i] Aguardando..."
-                      sleep 2
-                    done
-                    echo "[PostStart] Restaurando banco..."
-                    mysql -h 127.0.0.1 -uroot -proot -e "CREATE DATABASE IF NOT EXISTS usuarios_db;"
-                    mysql -h 127.0.0.1 -uroot -proot usuarios_db < /backup/usuarios_dump.sql
       volumes:
         - name: mysql-data
           persistentVolumeClaim:
@@ -48,3 +19,43 @@ spec:
         - name: backup-volume
           persistentVolumeClaim:
             claimName: mysql-backup-pvc
+      initContainers:
+        - name: restore-db
+          image: mysql:5.7
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "[Init] Verificando se o banco já foi restaurado..."
+              if [ -d "/var/lib/mysql/mysql" ]; then
+                echo "[Init] Dados já existem. Pulando restauração."
+                exit 0
+              fi
+
+              echo "[Init] Esperando o MySQL iniciar..."
+              for i in $(seq 1 60); do
+                mysqladmin ping -h localhost --silent && break
+                echo "[Tentativa $i] Aguardando MySQL subir..."
+                sleep 2
+              done
+
+              echo "[Init] Criando banco e restaurando dump..."
+              mysql -h localhost -u root -proot -e "CREATE DATABASE IF NOT EXISTS usuarios_db;"
+              mysql -h localhost -u root -proot usuarios_db < /backup/usuarios_dump.sql
+          volumeMounts:
+            - name: backup-volume
+              mountPath: /backup
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+      containers:
+        - name: mysql
+          image: mysql:5.7
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: root
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+            - name: backup-volume
+              mountPath: /backup
