@@ -32,14 +32,18 @@ spec:
             [
               "sh",
               "-c",
-              "if [ -f /backup/usuarios_dump.sql ]; then echo 'Restaurando dump...'; mysql -h localhost -u root -proot < /backup/usuarios_dump.sql; else echo 'Nenhum dump encontrado.'; fi"
+              "until mysqladmin ping -h mysql --silent; do echo 'Aguardando MySQL...'; sleep 5; done; \
+              if [ -f /backup/usuarios_dump.sql ]; then \
+                echo 'Restaurando dump...'; \
+                mysql -h mysql -u root -proot < /backup/usuarios_dump.sql; \
+              else \
+                echo 'Nenhum dump encontrado.'; \
+              fi"
             ]
           env:
             - name: MYSQL_ROOT_PASSWORD
               value: root
           volumeMounts:
-            - name: mysql-data
-              mountPath: /var/lib/mysql
             - name: backup-volume
               mountPath: /backup
       volumes:
