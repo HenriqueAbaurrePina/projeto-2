@@ -65,7 +65,7 @@ spec:
           command: ["/bin/bash", "-c"]
           args:
             - |
-              if [ -d "/var/lib/mysql/mysql" ]; then
+              if [ "$(ls -A /var/lib/mysql)" ]; then
                 echo "⚠️ Dados já existem. Pulando inicialização."
                 exec mysqld
               else
