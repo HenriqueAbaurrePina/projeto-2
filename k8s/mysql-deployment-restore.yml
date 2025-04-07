@@ -32,10 +32,10 @@ spec:
             [
               "sh",
               "-c",
-              "until mysqladmin ping -h mysql --silent; do echo 'Aguardando MySQL...'; sleep 5; done; \
+              "until mysqladmin ping -h 127.0.0.1 --silent; do echo 'Aguardando MySQL...'; sleep 5; done; \
               if [ -f /backup/usuarios_dump.sql ]; then \
                 echo 'Restaurando dump...'; \
-                mysql -h mysql -u root -proot < /backup/usuarios_dump.sql; \
+                mysql -h 127.0.0.1 -u root -proot < /backup/usuarios_dump.sql; \
               else \
                 echo 'Nenhum dump encontrado.'; \
               fi"
