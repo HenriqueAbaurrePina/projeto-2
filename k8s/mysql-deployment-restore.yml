@@ -3,64 +3,53 @@ kind: Deployment
 metadata:
   name: mysql
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: mysql
+  replicas: 1
   template:
     metadata:
       labels:
         app: mysql
     spec:
-      volumes:
-        - name: mysql-data
-          emptyDir: {}
-        - name: backup-volume
-          persistentVolumeClaim:
-            claimName: mysql-backup-pvc
-
       initContainers:
-        - name: cleanup
-          image: busybox
-          command: ["sh", "-c", "rm -rf /var/lib/mysql/*"]
-          volumeMounts:
-            - name: mysql-data
-              mountPath: /var/lib/mysql
-
         - name: restore-db
           image: mysql:5.7
           command:
             - sh
             - -c
-          args:
             - |
-              echo "[Init] Verificando se o banco já foi restaurado...";
-              if [ -f /var/lib/mysql/.restaurado ]; then
-                echo "[Init] Banco já restaurado, pulando...";
-                exit 0;
+              echo "[Init] Verificando se o banco já foi restaurado..."
+              if [ -d "/var/lib/mysql/mysql" ]; then
+                echo "[Init] Banco de dados já está inicializado."
+              else
+                echo "[Init] Aguardando o MySQL iniciar..."
+                for i in $(seq 1 60); do
+                  mysqladmin ping -h 127.0.0.1 -proot --silent && break
+                  echo "[Tentativa $i] Aguardando MySQL subir..."
+                  sleep 2
+                done
+                if [ -f /backup/usuarios_dump.sql ]; then
+                  echo "[Init] Restaurando dump..."
+                  mysql -h 127.0.0.1 -u root -proot < /backup/usuarios_dump.sql
+                else
+                  echo "[Init] Nenhum dump encontrado em /backup."
+                fi
               fi
-              echo "[Init] Esperando o MySQL iniciar...";
-              for i in $(seq 1 60); do
-                mysqladmin ping -h 127.0.0.1 -proot --silent && break
-                echo "[Tentativa $i] Aguardando MySQL subir...";
-                sleep 2;
-              done
-              echo "[Init] Restaurando dump...";
-              mysql -h 127.0.0.1 -u root -proot -e "CREATE DATABASE IF NOT EXISTS usuarios_db;"
-              mysql -h 127.0.0.1 -u root -proot usuarios_db < /backup/usuarios_dump.sql
-              touch /var/lib/mysql/.restaurado
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: root
           volumeMounts:
             - name: mysql-data
               mountPath: /var/lib/mysql
             - name: backup-volume
               mountPath: /backup
-
       containers:
         - name: mysql
           image: mysql:5.7
           env:
             - name: MYSQL_ROOT_PASSWORD
-              value: "root"
+              value: root
           ports:
             - containerPort: 3306
           volumeMounts:
@@ -68,3 +57,9 @@ spec:
               mountPath: /var/lib/mysql
             - name: backup-volume
               mountPath: /backup
+      volumes:
+        - name: mysql-data
+          emptyDir: {}
+        - name: backup-volume
+          persistentVolumeClaim:
+            claimName: mysql-backup-pvc
