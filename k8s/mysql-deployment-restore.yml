@@ -70,5 +70,7 @@ spec:
                 exec mysqld
               else
                 echo "📦 Inicializando banco de dados pela primeira vez..."
-                exec docker-entrypoint.sh mysqld
+                mysqld --initialize-insecure --user=mysql
+                exec mysqld
               fi
+
