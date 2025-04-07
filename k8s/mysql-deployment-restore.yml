@@ -32,13 +32,18 @@ spec:
             [
               "sh",
               "-c",
-              "until mysqladmin ping -h 127.0.0.1 --silent; do echo 'Aguardando MySQL...'; sleep 5; done; \
-              if [ -f /backup/usuarios_dump.sql ]; then \
-                echo 'Restaurando dump...'; \
-                mysql -h 127.0.0.1 -u root -proot < /backup/usuarios_dump.sql; \
-              else \
-                echo 'Nenhum dump encontrado.'; \
-              fi"
+              "for i in $(seq 1 60); do \
+                echo \"[Tentativa $i] Aguardando MySQL subir...\"; \
+                if mysqladmin ping -h 127.0.0.1 --silent; then \
+                  echo 'MySQL está disponível! Restaurando dump...'; \
+                  if [ -f /backup/usuarios_dump.sql ]; then \
+                    mysql -h 127.0.0.1 -u root -proot < /backup/usuarios_dump.sql && break; \
+                  else \
+                    echo 'Nenhum dump encontrado.' && break; \
+                  fi; \
+                fi; \
+                sleep 5; \
+              done"
             ]
           env:
             - name: MYSQL_ROOT_PASSWORD
