@@ -22,25 +22,27 @@ spec:
               set -e
               echo "[+] Verificando necessidade de restauração..."
 
-              # Verifica se o arquivo da tabela 'usuarios' já existe
+              # Verifica se o dump da tabela já foi restaurado
               if [ ! -f /var/lib/mysql/usuarios_db/usuarios.ibd ]; then
                 echo "[!] Dump ainda não restaurado. Iniciando restauração..."
 
-                # Limpa qualquer conteúdo anterior
+                # Limpa qualquer conteúdo antigo
                 rm -rf /var/lib/mysql/*
                 mysqld --initialize-insecure --datadir=/var/lib/mysql
 
                 echo "[+] Iniciando MySQL temporário para restaurar dump..."
                 mysqld --skip-networking --datadir=/var/lib/mysql &
 
-                # Aguarda o servidor iniciar
                 for i in {1..10}; do
                   sleep 2
                   mysqladmin ping -uroot && break
                 done
 
-                echo "[+] Executando restauração do dump..."
-                mysql -uroot < /backup/usuarios_dump.sql
+                echo "[+] Criando banco de dados..."
+                mysql -uroot -e "CREATE DATABASE IF NOT EXISTS usuarios_db"
+
+                echo "[+] Executando restauração do dump no banco usuarios_db..."
+                mysql -uroot usuarios_db < /backup/usuarios_dump.sql
 
                 echo "[✔] Finalizando MySQL temporário..."
                 mysqladmin shutdown -uroot
