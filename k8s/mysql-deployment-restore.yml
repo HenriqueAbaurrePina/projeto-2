@@ -19,23 +19,21 @@ spec:
             - sh
             - -c
             - |
-              set -e  # Faz o script falhar ao primeiro erro
+              set -e
               echo "[+] Verificando necessidade de restauração..."
 
-              # Se o diretório não existe ou está vazio, restaurar
-              if [ ! -d /var/lib/mysql/mysql ] || [ -z "$(ls -A /var/lib/mysql/mysql 2>/dev/null)" ]; then
-                echo "[!] Diretório vazio ou ausente. Restaurando dump..."
+              # Verifica se o arquivo da tabela 'usuarios' já existe
+              if [ ! -f /var/lib/mysql/usuarios_db/usuarios.ibd ]; then
+                echo "[!] Dump ainda não restaurado. Iniciando restauração..."
 
-                # Limpa qualquer resquício no diretório
+                # Limpa qualquer conteúdo anterior
                 rm -rf /var/lib/mysql/*
-
-                # Inicializa o banco de dados sem senha
                 mysqld --initialize-insecure --datadir=/var/lib/mysql
 
-                echo "[+] Iniciando MySQL temporário..."
+                echo "[+] Iniciando MySQL temporário para restaurar dump..."
                 mysqld --skip-networking --datadir=/var/lib/mysql &
 
-                # Aguarda o servidor ficar pronto para aceitar comandos
+                # Aguarda o servidor iniciar
                 for i in {1..10}; do
                   sleep 2
                   mysqladmin ping -uroot && break
@@ -44,10 +42,10 @@ spec:
                 echo "[+] Executando restauração do dump..."
                 mysql -uroot < /backup/usuarios_dump.sql
 
-                echo "[✔] Encerrando MySQL temporário..."
+                echo "[✔] Finalizando MySQL temporário..."
                 mysqladmin shutdown -uroot
               else
-                echo "[✔] Dados já existentes. Pulando restauração."
+                echo "[✔] Dump já restaurado. Pulando."
               fi
           volumeMounts:
             - name: mysql-data
@@ -55,7 +53,6 @@ spec:
             - name: backup
               mountPath: /backup
 
-        # Garante que permissões estejam corretas após a restauração
         - name: fix-perms
           image: busybox
           command: ["sh", "-c", "chown -R 999:999 /var/lib/mysql"]
@@ -67,7 +64,6 @@ spec:
         - name: mysql
           image: mysql:5.7
           env:
-            # Permite login sem senha, pois o root foi criado sem senha na inicialização
             - name: MYSQL_ALLOW_EMPTY_PASSWORD
               value: "yes"
           ports:
@@ -77,11 +73,8 @@ spec:
               mountPath: /var/lib/mysql
 
       volumes:
-        # Volume temporário (apagado a cada reinício)
         - name: mysql-data
           emptyDir: {}
-
-        # PVC com o dump de backup persistente
         - name: backup
           persistentVolumeClaim:
             claimName: mysql-backup-pvc
