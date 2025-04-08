@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      initContainers:
+        - name: wait-and-restore
+          image: mysql:5.7
+          command:
+            - sh
+            - -c
+            - |
+              echo "[+] Verificando necessidade de restauração..."
+              if [ ! -d /var/lib/mysql/mysql ] || [ -z "$(ls -A /var/lib/mysql/mysql 2>/dev/null)" ]; then
+                echo "[!] Diretório vazio ou ausente. Restaurando dump..."
+                rm -rf /var/lib/mysql/*
+                mysqld --initialize-insecure
+                mysqld_safe --skip-networking &
+                sleep 10
+                mysql -uroot < /backup/usuarios_dump.sql
+                killall mysqld
+                sleep 5
+              else
+                echo "[✔] Dados já existentes. Pulando restauração."
+              fi
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+            - name: backup
+              mountPath: /backup
+        - name: fix-perms
+          image: busybox
+          command: ["sh", "-c", "chown -R 999:999 /var/lib/mysql"]
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+      containers:
+        - name: mysql
+          image: mysql:5.7
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: root
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-data
+          emptyDir: {}
+        - name: backup
+          persistentVolumeClaim:
+            claimName: mysql-backup-pvc
