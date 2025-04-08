@@ -19,16 +19,33 @@ spec:
             - sh
             - -c
             - |
+              set -e  # Faz o script falhar ao primeiro erro
               echo "[+] Verificando necessidade de restauração..."
+
+              # Se o diretório não existe ou está vazio, restaurar
               if [ ! -d /var/lib/mysql/mysql ] || [ -z "$(ls -A /var/lib/mysql/mysql 2>/dev/null)" ]; then
                 echo "[!] Diretório vazio ou ausente. Restaurando dump..."
+
+                # Limpa qualquer resquício no diretório
                 rm -rf /var/lib/mysql/*
-                mysqld --initialize-insecure
-                mysqld_safe --skip-networking &
-                sleep 10
+
+                # Inicializa o banco de dados sem senha
+                mysqld --initialize-insecure --datadir=/var/lib/mysql
+
+                echo "[+] Iniciando MySQL temporário..."
+                mysqld --skip-networking --datadir=/var/lib/mysql &
+
+                # Aguarda o servidor ficar pronto para aceitar comandos
+                for i in {1..10}; do
+                  sleep 2
+                  mysqladmin ping -uroot && break
+                done
+
+                echo "[+] Executando restauração do dump..."
                 mysql -uroot < /backup/usuarios_dump.sql
-                killall mysqld
-                sleep 5
+
+                echo "[✔] Encerrando MySQL temporário..."
+                mysqladmin shutdown -uroot
               else
                 echo "[✔] Dados já existentes. Pulando restauração."
               fi
@@ -37,16 +54,20 @@ spec:
               mountPath: /var/lib/mysql
             - name: backup
               mountPath: /backup
+
+        # Garante que permissões estejam corretas após a restauração
         - name: fix-perms
           image: busybox
           command: ["sh", "-c", "chown -R 999:999 /var/lib/mysql"]
           volumeMounts:
             - name: mysql-data
               mountPath: /var/lib/mysql
+
       containers:
         - name: mysql
           image: mysql:5.7
           env:
+            # Permite login sem senha, pois o root foi criado sem senha na inicialização
             - name: MYSQL_ALLOW_EMPTY_PASSWORD
               value: "yes"
           ports:
@@ -54,9 +75,13 @@ spec:
           volumeMounts:
             - name: mysql-data
               mountPath: /var/lib/mysql
+
       volumes:
+        # Volume temporário (apagado a cada reinício)
         - name: mysql-data
           emptyDir: {}
+
+        # PVC com o dump de backup persistente
         - name: backup
           persistentVolumeClaim:
             claimName: mysql-backup-pvc
