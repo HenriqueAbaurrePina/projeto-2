@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      initContainers:
+        - name: restore-from-dump
+          image: mysql:5.7
+          command: [ "sh", "-c", "sleep 10 && mysql -h 127.0.0.1 -uroot -proot < /backup/usuarios_dump.sql || true" ]
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+            - name: backup-volume
+              mountPath: /backup
+        - name: fix-perms
+          image: busybox
+          command: ["sh", "-c", "chown -R 999:999 /var/lib/mysql"]
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+      containers:
+        - name: mysql
+          image: mysql:5.7
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: root
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-data
+          emptyDir: {}
+        - name: backup-volume
+          persistentVolumeClaim:
+            claimName: mysql-backup-pvc

@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backup-trigger
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backup-trigger
+  template:
+    metadata:
+      labels:
+        app: backup-trigger
+    spec:
+      containers:
+        - name: backup-trigger
+          image: henriquepina/backup-trigger:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: backup-volume
+              mountPath: /backup
+      volumes:
+        - name: backup-volume
+          persistentVolumeClaim:
+            claimName: mysql-backup-pvc
