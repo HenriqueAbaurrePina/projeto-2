@@ -39,7 +39,11 @@ spec:
                 done
 
                 echo "[+] Criando banco de dados..."
-                mysql -uroot -e "CREATE DATABASE IF NOT EXISTS usuarios_db"
+                mysql -uroot -e "
+                  CREATE DATABASE IF NOT EXISTS usuarios_db;
+                  GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'root';
+                  FLUSH PRIVILEGES;
+                "
 
                 echo "[+] Executando restauração do dump no banco usuarios_db..."
                 mysql -uroot usuarios_db < /backup/usuarios_dump.sql
