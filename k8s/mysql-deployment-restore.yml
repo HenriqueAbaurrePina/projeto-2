@@ -22,11 +22,16 @@ spec:
               set -e
               echo "[+] Verificando necessidade de restauração..."
 
-              # Verifica se o dump da tabela já foi restaurado
+              # Se dump não existir, copia o padrão do ConfigMap
+              if [ ! -f /backup/usuarios_dump.sql ]; then
+                echo "[!] Dump não encontrado. Copiando default para /backup..."
+                cp /default/usuarios_dump.sql /backup/usuarios_dump.sql
+              fi
+
+              # Verifica se o banco já foi restaurado
               if [ ! -f /var/lib/mysql/usuarios_db/usuarios.ibd ]; then
                 echo "[!] Dump ainda não restaurado. Iniciando restauração..."
 
-                # Limpa qualquer conteúdo antigo
                 rm -rf /var/lib/mysql/*
                 mysqld --initialize-insecure --datadir=/var/lib/mysql
 
@@ -38,7 +43,7 @@ spec:
                   mysqladmin ping -uroot && break
                 done
 
-                echo "[+] Criando banco de dados..."
+                echo "[+] Criando banco de dados e permissões..."
                 mysql -uroot -e "
                   CREATE DATABASE IF NOT EXISTS usuarios_db;
                   GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'root';
@@ -58,6 +63,8 @@ spec:
               mountPath: /var/lib/mysql
             - name: backup
               mountPath: /backup
+            - name: default-dump
+              mountPath: /default
 
         - name: fix-perms
           image: busybox
@@ -84,3 +91,6 @@ spec:
         - name: backup
           persistentVolumeClaim:
             claimName: mysql-backup-pvc
+        - name: default-dump
+          configMap:
+            name: usuarios-dump
