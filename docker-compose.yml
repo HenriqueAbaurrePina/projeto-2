@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   mysql:
     image: mysql:5.7
@@ -7,14 +9,22 @@ services:
     ports:
       - "3306:3306"
     volumes:
+      - mysql-data:/var/lib/mysql
       - ./bd/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - backup-volume:/backup
+    networks:
+      - app-net
+
   backend:
     build: ./backend
     container_name: backend
     depends_on:
       - mysql
     ports:
-      - 8081:80
+      - "8081:80"
+    networks:
+      - app-net
+
   frontend:
     build: ./frontend
     container_name: frontend
@@ -22,7 +32,26 @@ services:
       - backend
     ports:
       - "8080:80"
-    
-    
-    
-  
+    networks:
+      - app-net
+
+  backup-trigger:
+    build: ./backup-trigger
+    container_name: backup-trigger
+    depends_on:
+      - mysql
+    volumes:
+      - ./backup-trigger/mysql-backup-job.yml:/app/mysql-backup-job.yml
+      - /var/run/docker.sock:/var/run/docker.sock # se for necessário criar containers
+      - backup-volume:/backup
+    ports:
+      - "8082:80"
+    networks:
+      - app-net
+
+volumes:
+  mysql-data:
+  backup-volume:
+
+networks:
+  app-net:
