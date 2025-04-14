@@ -1,6 +1,10 @@
-FROM php:8.1-apache
+FROM php:8.2-apache
 
-# Copia os arquivos do frontend
+RUN apt-get update && apt-get install -y \
+    git unzip curl libzip-dev && \
+    docker-php-ext-install pdo pdo_mysql
+
+# Copia os arquivos do backend
 COPY . /var/www/html/
 
 # Copia a biblioteca compartilhada já buildada

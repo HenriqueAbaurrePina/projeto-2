@@ -1,4 +1,9 @@
 <?php
+require __DIR__ . '/../shared/monolog.php';
+
+$logger = getLogger();
+$logger->info("Página listar.php acessada");
+
 echo "<h2>Lista de Usuários</h2>";
 
 $ch = curl_init('http://backend/');
