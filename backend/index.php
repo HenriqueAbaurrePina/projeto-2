@@ -1,19 +1,26 @@
 <?php
+require 'monolog.php';
+require 'db.php';
 
-require_once 'db.php';
+$logger = getLogger();
+$logger->info("Página index.php acessada");
 
 header("Content-Type: application/json");
 
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
-
-    $query = $pdo->query("SELECT * FROM usuarios");
-    $usuarios = $query->fetchAll(PDO::FETCH_ASSOC);
-    echo json_encode($usuarios);
+    try {
+        $stmt = $pdo->query("SELECT * FROM usuarios");
+        $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        echo json_encode($usuarios);
+    } catch (PDOException $e) {
+        $logger->error("Erro ao listar usuários: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(["error" => "Erro interno ao listar usuários"]);
+    }
 
 } elseif ($method === 'POST') {
-
     $data = json_decode(file_get_contents("php://input"), true);
 
     if (!isset($data['nome'], $data['email'])) {
@@ -22,17 +29,23 @@ if ($method === 'GET') {
         exit;
     }
 
-    $stmt = $pdo->prepare("INSERT INTO usuarios (nome, email) VALUES (?, ?)");
-    $stmt->execute([$data['nome'], $data['email']]);
+    try {
+        $stmt = $pdo->prepare("INSERT INTO usuarios (nome, email) VALUES (?, ?)");
+        $stmt->execute([$data['nome'], $data['email']]);
 
-    // 🚀 Dispara o serviço de backup
-    @file_get_contents('http://backup-trigger-service/backup');
+        $logger->info("Usuário cadastrado: " . $data['nome']);
 
-    echo json_encode(['status' => 'success']);
+        // Disparar backup
+        @file_get_contents('http://backup-trigger-service/backup');
+
+        echo json_encode(['status' => 'success']);
+    } catch (PDOException $e) {
+        $logger->error("Erro ao cadastrar usuário: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['error' => 'Erro interno ao cadastrar usuário']);
+    }
 
 } else {
-
     http_response_code(405);
     echo json_encode(['error' => 'Método não permitido']);
-
 }
