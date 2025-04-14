@@ -42,16 +42,45 @@ services:
       - mysql
     volumes:
       - ./backup-trigger/mysql-backup-job.yml:/app/mysql-backup-job.yml
-      - /var/run/docker.sock:/var/run/docker.sock # se for necessário criar containers
+      - /var/run/docker.sock:/var/run/docker.sock
       - backup-volume:/backup
     ports:
       - "8082:80"
     networks:
       - app-net
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      - app-net
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.10
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    volumes:
+      - kibana-data:/usr/share/kibana/data
+    networks:
+      - app-net
+
 volumes:
   mysql-data:
   backup-volume:
+  elasticsearch-data:
+  kibana-data:
 
 networks:
   app-net:
