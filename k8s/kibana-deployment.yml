@@ -20,3 +20,10 @@ spec:
           env:
             - name: ELASTICSEARCH_HOSTS
               value: "http://elasticsearch:9200"
+          volumeMounts:
+            - name: kibana-storage
+              mountPath: /usr/share/kibana/data
+      volumes:
+        - name: kibana-storage
+          persistentVolumeClaim:
+            claimName: kibana-pvc
