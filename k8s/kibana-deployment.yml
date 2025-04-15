@@ -14,6 +14,24 @@ spec:
     spec:
       securityContext:
         fsGroup: 1000
+      initContainers:
+        - name: kibana-init-indexpattern
+          image: curlimages/curl:8.2.1
+          command:
+            - sh
+            - -c
+            - |
+              echo "⏳ Aguardando Kibana iniciar..."
+              until wget -qO- http://localhost:5601 > /dev/null 2>&1; do sleep 3; done
+              echo "✅ Kibana disponível. Criando index pattern php-logs..."
+              curl -s -X POST http://localhost:5601/api/saved_objects/index-pattern \
+                -H "kbn-xsrf: true" \
+                -H "Content-Type: application/json" \
+                -d '{"attributes":{"title":"php-logs","timeFieldName":"@timestamp"}}' || true
+              echo "✅ Index pattern enviado (ou já existente)."
+          volumeMounts:
+            - name: kibana-storage
+              mountPath: /usr/share/kibana/data
       containers:
         - name: kibana
           image: docker.elastic.co/kibana/kibana:7.17.10
