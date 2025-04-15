@@ -1,5 +1,11 @@
 <?php
-require __DIR__ . '/../shared/monolog.php';
+echo "<pre>INÍCIO listar.php<br>";
+echo "DIR: " . __DIR__ . "<br>";
+echo "VERIFICANDO AUTOLOAD: " . (file_exists(__DIR__ . '/shared/vendor/autoload.php') ? 'SIM' : 'NÃO') . "<br>";
+
+require __DIR__ . '/shared/monolog.php';
+echo "INCLUIU MONOLOG<br>";
+
 
 $logger = getLogger();
 $logger->info("Página listar.php acessada");
