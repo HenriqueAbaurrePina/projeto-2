@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/../shared/monolog.php';
+require __DIR__ . '/shared/monolog.php';
 require 'db.php';
 
 $logger = getLogger();
@@ -13,6 +13,7 @@ if ($method === 'GET') {
     try {
         $stmt = $pdo->query("SELECT * FROM usuarios");
         $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $logger->info("Total de usuários retornados: " . count($usuarios));
         echo json_encode($usuarios);
     } catch (PDOException $e) {
         $logger->error("Erro ao listar usuários: " . $e->getMessage());
@@ -24,6 +25,7 @@ if ($method === 'GET') {
     $data = json_decode(file_get_contents("php://input"), true);
 
     if (!isset($data['nome'], $data['email'])) {
+        $logger->warning("Tentativa de cadastro inválido: " . json_encode($data));
         http_response_code(400);
         echo json_encode(['error' => 'Nome e email são obrigatórios']);
         exit;
@@ -36,7 +38,11 @@ if ($method === 'GET') {
         $logger->info("Usuário cadastrado: " . $data['nome']);
 
         // Disparar backup
-        @file_get_contents('http://backup-trigger-service/backup');
+        if (@file_get_contents('http://backup-trigger-service/backup') === false) {
+            $logger->warning("Falha ao acionar o serviço de backup.");
+        } else {
+            $logger->info("Backup acionado com sucesso.");
+        }
 
         echo json_encode(['status' => 'success']);
     } catch (PDOException $e) {

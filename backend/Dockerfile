@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
 COPY . /var/www/html/
 
 # Copia a biblioteca compartilhada já buildada
-COPY --from=henriquepina/php-shared:v1.0 /shared /var/www/html/shared/
+COPY --from=henriquepina/php-shared:v1.9 /shared /var/www/html/shared/
 
 RUN a2enmod rewrite
 EXPOSE 80
