@@ -18,7 +18,14 @@ spec:
               echo "📤 Enviando log artificial para criar o índice 'php-logs'..."
               curl -s -X POST "http://elasticsearch:9200/php-logs/_doc" \
                 -H 'Content-Type: application/json' \
-                -d '{"@timestamp":"'"$(date -Is)"'","log_level":"info","message":"Kibana iniciado pelo Job","context":{}}'
+                -d '{
+                      "@timestamp":"'"$(date -Is)"'",
+                      "level":200,
+                      "level_name":"INFO",
+                      "message":"Kibana iniciado pelo Job",
+                      "context":{},
+                      "channel":"app"
+                    }'
 
               echo "⏳ Aguardando Kibana ficar disponível..."
               until curl -s http://kibana:5601 > /dev/null; do sleep 3; done
