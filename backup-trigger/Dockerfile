@@ -11,9 +11,10 @@ RUN curl -LO https://dl.k8s.io/release/v1.29.2/bin/linux/amd64/kubectl && \
 # Cria diretório da aplicação
 WORKDIR /var/www/html
 
-# Copia arquivos da aplicação e o YAML
+# Copia arquivos da aplicação e os YAMLs
 COPY index.php .
 COPY mysql-backup-job.yml /app/mysql-backup-job.yml
+COPY kibana-indexpattern-job.yml /app/kibana-indexpattern-job.yml
 
 EXPOSE 80
 CMD ["php", "-S", "0.0.0.0:80"]
