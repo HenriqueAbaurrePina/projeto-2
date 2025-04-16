@@ -12,7 +12,6 @@ spec:
       labels:
         app: backup-trigger
     spec:
-      serviceAccountName: backup-trigger-sa
       containers:
         - name: backup-trigger
           image: henriquepina/backup-trigger:latest
