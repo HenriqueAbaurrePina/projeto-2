@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: kibana-indexpattern-job
+  name: create-kibana-indexpattern
 spec:
   template:
     spec:
