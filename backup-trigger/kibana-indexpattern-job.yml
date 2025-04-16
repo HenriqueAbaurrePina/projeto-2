@@ -38,7 +38,7 @@ spec:
                 curl -s -X POST http://kibana:5601/api/saved_objects/index-pattern/php-logs \
                   -H "kbn-xsrf: true" \
                   -H "Content-Type: application/json" \
-                  -d '{"attributes":{"title":"php-logs","timeFieldName":"@timestamp"}}'
+                  -d '{"attributes":{"title":"php-logs","timeFieldName":"datetime"}}'
               else
                 echo "✅ Index pattern já existe"
               fi
