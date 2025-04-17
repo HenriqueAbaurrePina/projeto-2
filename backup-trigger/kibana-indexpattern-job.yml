@@ -12,10 +12,17 @@ spec:
             - sh
             - -c
             - |
-              echo "⏳ Aguardando Elasticsearch responder..."
-              until curl -s http://elasticsearch:9200 > /dev/null; do sleep 3; done
+              echo "⏳ Aguardando Elasticsearch..."
+              until curl -s http://elasticsearch:9200 > /dev/null; do
+                echo "🔄 Elasticsearch não está pronto ainda..."; sleep 5;
+              done
 
-              echo "📤 Enviando log artificial para criar o índice 'php-logs'..."
+              echo "⏳ Aguardando Kibana estar disponível..."
+              until curl -s http://kibana:5601/api/status | grep -q '"state":"green"'; do
+                echo "🔄 Kibana não está pronto ainda..."; sleep 5;
+              done
+
+              echo "📤 Enviando log artificial para criar índice 'php-logs'..."
               curl -s -X POST "http://elasticsearch:9200/php-logs/_doc" \
                 -H 'Content-Type: application/json' \
                 -d '{
@@ -27,10 +34,7 @@ spec:
                       "channel":"app"
                     }'
 
-              echo "⏳ Aguardando Kibana ficar disponível..."
-              until curl -s http://kibana:5601 > /dev/null; do sleep 3; done
-
-              echo "📡 Verificando se o index pattern já existe..."
+              echo "⏳ Verificando se o index pattern já existe..."
               STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://kibana:5601/api/saved_objects/index-pattern/php-logs)
 
               if [ "$STATUS" -ne 200 ]; then
@@ -43,7 +47,7 @@ spec:
                 echo "✅ Index pattern já existe"
               fi
 
-              echo "⭐ Definindo index pattern 'php-logs' como padrão no Kibana..."
+              echo "⭐ Definindo 'php-logs' como padrão no Kibana..."
               curl -s -X POST http://kibana:5601/api/kibana/settings/defaultIndex \
                 -H "kbn-xsrf: true" \
                 -H "Content-Type: application/json" \
