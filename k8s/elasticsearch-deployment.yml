@@ -12,6 +12,8 @@ spec:
       labels:
         app: elasticsearch
     spec:
+      securityContext:
+        fsGroup: 1000
       containers:
         - name: elasticsearch
           image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
@@ -34,10 +36,6 @@ spec:
             limits:
               memory: "1Gi"
               cpu: "500m"
-          securityContext:
-            runAsUser: 0
-            runAsGroup: 0
-            allowPrivilegeEscalation: false
       volumes:
         - name: elasticsearch-data
           persistentVolumeClaim:
