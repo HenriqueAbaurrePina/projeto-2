@@ -34,8 +34,11 @@ spec:
             limits:
               memory: "1Gi"
               cpu: "500m"
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            allowPrivilegeEscalation: false
       volumes:
         - name: elasticsearch-data
           persistentVolumeClaim:
             claimName: elasticsearch-pvc
-
