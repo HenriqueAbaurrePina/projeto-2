@@ -36,4 +36,6 @@ spec:
               cpu: "500m"
       volumes:
         - name: elasticsearch-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: elasticsearch-pvc
+
