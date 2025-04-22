@@ -14,6 +14,10 @@ WORKDIR /var/www/html
 # Copia arquivos da aplicação e os YAMLs
 COPY index.php .
 COPY mysql-backup-job.yml /app/mysql-backup-job.yml
+COPY kibana-indexpattern-job.yml /app/kibana-indexpattern-job.yml
+COPY entrypoint.sh /entrypoint.sh
+
+RUN chmod +x /entrypoint.sh
 
 EXPOSE 80
-CMD ["php", "-S", "0.0.0.0:80"]
+ENTRYPOINT ["/entrypoint.sh"]

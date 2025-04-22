@@ -1,6 +1,11 @@
 <?php
 header("Content-Type: text/plain");
 
+// Aguarda a API estar disponível (caso o container tenha acabado de iniciar)
+exec("until kubectl get pods -n default > /dev/null 2>&1; do sleep 1; done");
+
+sleep(2); // opcional: aguarda garantir readiness da rede
+
 // === MySQL Backup Job ===
 $originalBackup = "/app/mysql-backup-job.yml";
 $tempBackup = "/tmp/mysql-backup-job-" . time() . ".yml";
@@ -21,4 +26,6 @@ $output = shell_exec("kubectl apply -f $tempBackup 2>&1");
 echo "📄 Resultado do backup:\n$output\n";
 
 echo "✅ Job de backup finalizado.\n";
+flush();
+exit;
 ?>

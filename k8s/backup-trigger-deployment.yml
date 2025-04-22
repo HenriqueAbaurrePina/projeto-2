@@ -21,17 +21,6 @@ spec:
           volumeMounts:
             - name: backup-volume
               mountPath: /backup
-          lifecycle:
-            postStart:
-              exec:
-                command:
-                  - sh
-                  - -c
-                  - |
-                    echo "⏳ Disparando Job do Kibana Index Pattern..."
-                    cp /app/kibana-indexpattern-job.yml /tmp/kibana-indexpattern-job.yml
-                    sed -i "s/name: create-kibana-indexpattern/name: kibana-indexpattern-job-$(date +%s)/" /tmp/kibana-indexpattern-job.yml
-                    kubectl apply -f /tmp/kibana-indexpattern-job.yml || true
       volumes:
         - name: backup-volume
           persistentVolumeClaim:
