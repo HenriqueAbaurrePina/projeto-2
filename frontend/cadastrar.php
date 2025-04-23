@@ -23,7 +23,7 @@ $response = curl_exec($ch);
 curl_close($ch);
 
 // Disparar backup via microserviço
-@file_get_contents('http://backup-trigger-service/backup');
+@file_get_contents('http://backup-trigger-service/index.php');
 
 // Redireciona de volta para index
 header("Location: index.php");

@@ -1,0 +1,57 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: create-kibana-indexpattern
+spec:
+  template:
+    spec:
+      containers:
+        - name: create-indexpattern
+          image: curlimages/curl:8.2.1
+          command:
+            - sh
+            - -c
+            - |
+              echo "⏳ Aguardando Elasticsearch..."
+              until curl -s http://elasticsearch:9200 > /dev/null; do
+                echo "🔄 Elasticsearch não está pronto ainda..."; sleep 5;
+              done
+
+              echo "⏳ Aguardando Kibana estar disponível..."
+              until curl -s http://kibana:5601/api/status | grep -q '"state":"green"'; do
+                echo "🔄 Kibana não está pronto ainda..."; sleep 5;
+              done
+
+              echo "📤 Enviando log artificial para criar índice 'php-logs'..."
+              curl -s -X POST "http://elasticsearch:9200/php-logs/_doc" \
+                -H 'Content-Type: application/json' \
+                -d '{
+                      "datetime":"'"$(date -Is)"'",
+                      "level":200,
+                      "level_name":"INFO",
+                      "message":"Kibana iniciado pelo Job",
+                      "context":{},
+                      "channel":"app"
+                    }'
+
+              echo "⏳ Verificando se o index pattern já existe..."
+              STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://kibana:5601/api/saved_objects/index-pattern/php-logs)
+
+              if [ "$STATUS" -ne 200 ]; then
+                echo "🆕 Criando index pattern 'php-logs'..."
+                curl -s -X POST http://kibana:5601/api/saved_objects/index-pattern/php-logs \
+                  -H "kbn-xsrf: true" \
+                  -H "Content-Type: application/json" \
+                  -d '{"attributes":{"title":"php-logs","timeFieldName":"datetime"}}'
+              else
+                echo "✅ Index pattern já existe"
+              fi
+
+              echo "⭐ Definindo 'php-logs' como padrão no Kibana..."
+              curl -s -X POST http://kibana:5601/api/kibana/settings/defaultIndex \
+                -H "kbn-xsrf: true" \
+                -H "Content-Type: application/json" \
+                -d '{"value": "php-logs"}'
+
+              echo "✅ Configuração finalizada."
+      restartPolicy: OnFailure
