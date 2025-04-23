@@ -19,7 +19,7 @@ Este projeto implementa um sistema completo com frontend, backend em PHP, banco 
 
 ```bash
 git clone <url-do-repositorio>
-cd Projeto3
+cd Projeto-2
 ```
 
 2. Suba os serviços:
@@ -52,7 +52,7 @@ docker-compose up --build
 
 ```bash
 git clone <url-do-repositorio>
-cd Projeto3
+cd Projeto-2
 ```
 
 2. Execute o script:
@@ -112,7 +112,7 @@ kubectl exec -it deploy/mysql -- mysql -uroot -e "USE usuarios_db; SELECT * FROM
 ## 📂 Estrutura do Projeto
 
 ```
-Projeto3/
+Projeto-2/
 │
 ├── backend/                # API PHP (PDO + Monolog)
 ├── frontend/               # Interface de cadastro
