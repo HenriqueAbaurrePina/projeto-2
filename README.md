@@ -1,5 +1,5 @@
 
-# Projeto 3 — Sistema de Cadastro com Backup Automático e Monitoramento
+# Projeto 2 — Sistema de Cadastro com Backup Automático e Monitoramento
 
 Este projeto implementa um sistema completo com frontend, backend em PHP, banco de dados MySQL, backups automáticos via microserviço e monitoramento com Elasticsearch e Kibana. Ele pode ser executado localmente com Docker ou em um cluster Kubernetes (AKS).
 
