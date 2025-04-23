@@ -22,19 +22,13 @@ git clone <url-do-repositorio>
 cd Projeto3
 ```
 
-2. Construa a imagem base com dependências compartilhadas:
-
-```bash
-docker build -t henriquepina/php-shared:v1.9 ./shared
-```
-
-3. Suba os serviços:
+2. Suba os serviços:
 
 ```bash
 docker-compose up --build
 ```
 
-4. Acesse os serviços:
+3. Acesse os serviços:
 
 - **Frontend**: [http://localhost:8080](http://localhost:8080)
 - **Backend (API)**: [http://localhost:8081](http://localhost:8081)
